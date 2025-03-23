@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt  # Using PyJWT
-from models.user import User  # Adjust based on your structure
+from models.model import User  # Adjust based on your structure
 from database import get_db  # Example DB session function
 from sqlalchemy.orm import Session
 

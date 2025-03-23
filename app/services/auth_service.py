@@ -1,6 +1,6 @@
 from database import get_db
 from sqlalchemy.orm import Session
-from models.user import User
+from models.model import User
 import jwt  # Using PyJWT
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -9,7 +9,7 @@ from views.auth import RegisterRequest
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from models.user import User
+from models.model import User
 from passlib.context import CryptContext
 
 
