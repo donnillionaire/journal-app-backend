@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
 from typing import List
-
+from models.model import Journal
 
 class JournalCreate(BaseModel):
     title: str
@@ -24,3 +24,10 @@ class JournalListResponse(BaseModel):
     message: str
     data: List[JournalResponse]  # List of journals
     total: int
+
+
+
+class JournalAPIResponse(BaseModel):
+    status: str
+    message: str
+    data: JournalResponse  # List of journals
