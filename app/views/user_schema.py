@@ -1,14 +1,30 @@
 from pydantic import BaseModel, EmailStr
+from uuid import UUID  # Import UUID
 
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str  # Include password for user creation
 
+
+
+
+
 class UserResponse(BaseModel):
-    id: int
-    username: str
+    id: UUID
+    first_name: str
+    last_name: str
     email: EmailStr
 
     class Config:
         orm_mode = True
+
+
+
+
+class UserAPIResponse(BaseModel):
+    status: str
+    message: str
+    data: UserResponse  # List of journals
+    
+    
