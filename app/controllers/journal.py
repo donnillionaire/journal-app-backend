@@ -1,41 +1,54 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models.model import Journal
+from models.model import Journal, User
 from views.journal_schema import JournalCreate, JournalResponse
 from typing import List
+from utils.auth import get_current_user  # Import authentication
 
-router = APIRouter(prefix="/journals", tags=["Journals"])
+router = APIRouter(prefix="/api/journals", tags=["Journals"])
 
-# Create a journal entry
 @router.post("/", response_model=JournalResponse)
-def create_journal(journal: JournalCreate, db: Session = Depends(get_db)):
-    new_journal = Journal(**journal.dict())
+def create_journal(
+    journal: JournalCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    new_journal = Journal(**journal.dict(), user_id=current_user.id)
     db.add(new_journal)
     db.commit()
     db.refresh(new_journal)
     return new_journal
 
-# Get all journal entries
 @router.get("/", response_model=List[JournalResponse])
-def get_journals(db: Session = Depends(get_db)):
-    return db.query(Journal).all()
+def get_journals(
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    return db.query(Journal).filter(Journal.user_id == current_user.id).all()
 
-# Get a single journal entry by ID
 @router.get("/{journal_id}", response_model=JournalResponse)
-def get_journal(journal_id: int, db: Session = Depends(get_db)):
-    journal = db.query(Journal).filter(Journal.id == journal_id).first()
+def get_journal(
+    journal_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    journal = db.query(Journal).filter(Journal.id == journal_id, Journal.user_id == current_user.id).first()
     if not journal:
         raise HTTPException(status_code=404, detail="Journal not found")
     return journal
 
-# Update a journal entry
 @router.put("/{journal_id}", response_model=JournalResponse)
-def update_journal(journal_id: int, journal_data: JournalCreate, db: Session = Depends(get_db)):
-    journal = db.query(Journal).filter(Journal.id == journal_id).first()
+def update_journal(
+    journal_id: int, 
+    journal_data: JournalCreate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    journal = db.query(Journal).filter(Journal.id == journal_id, Journal.user_id == current_user.id).first()
     if not journal:
         raise HTTPException(status_code=404, detail="Journal not found")
-    
+
     for key, value in journal_data.dict().items():
         setattr(journal, key, value)
     
@@ -43,10 +56,13 @@ def update_journal(journal_id: int, journal_data: JournalCreate, db: Session = D
     db.refresh(journal)
     return journal
 
-# Delete a journal entry
 @router.delete("/{journal_id}")
-def delete_journal(journal_id: int, db: Session = Depends(get_db)):
-    journal = db.query(Journal).filter(Journal.id == journal_id).first()
+def delete_journal(
+    journal_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    journal = db.query(Journal).filter(Journal.id == journal_id, Journal.user_id == current_user.id).first()
     if not journal:
         raise HTTPException(status_code=404, detail="Journal not found")
 

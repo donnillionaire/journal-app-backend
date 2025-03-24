@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models.model import User
 from passlib.context import CryptContext
+from utils.auth import create_access_token
+from views.auth import Token, LoginRequest
 
 
 SECRET_KEY = "your-secret-key"
@@ -37,22 +39,80 @@ def authenticate_user(email: str, password: str) -> str | None:
 
 
 
-def register_user(request, db: Session):
-    # 🔹 Use `query()` instead of `select()`
-    existing_user = db.query(User).filter(User.email == request.email).first()
+# def register_user(request, db: Session):
+#     # 🔹 Use `query()` instead of `select()`
+#     existing_user = db.query(User).filter(User.email == request.email).first()
 
+#     if existing_user:
+#         raise HTTPException(status_code=400, detail="User already exists")
+
+#     # Hash the password
+#     hashed_password = pwd_context.hash(request.password)
+
+#     # Create a new user
+#     new_user = User(email=request.email, first_name=request.first_name, last_name=request.last_name, password=hashed_password)
+
+#     # Add the new user to the session
+#     db.add(new_user)
+#     db.commit()  # Commit changes to the database
+#     db.refresh(new_user)  # Refresh to get the latest state
+
+#     return {"message": "User registered successfully"}
+
+
+
+
+def register_user(request: RegisterRequest, db: Session) -> Token:
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.email == request.email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     # Hash the password
     hashed_password = pwd_context.hash(request.password)
 
     # Create a new user
-    new_user = User(email=request.email, first_name=request.first_name, last_name=request.last_name, password=hashed_password)
-
-    # Add the new user to the session
+    new_user = User(
+        first_name=request.first_name,
+        last_name=request.last_name,
+        email=request.email,
+        password=hashed_password
+    )
     db.add(new_user)
-    db.commit()  # Commit changes to the database
-    db.refresh(new_user)  # Refresh to get the latest state
+    db.commit()
+    db.refresh(new_user)
+
+    # Generate access token
+    access_token = create_access_token(
+        data={"sub": str(new_user.id)},
+        expires_delta=timedelta(minutes=30)
+    )
+
+    # return {"access_token": access_token, "token_type": "bearer"}
 
     return {"message": "User registered successfully"}
+
+
+
+
+
+
+
+
+def login_user(request: LoginRequest, db: Session) -> Token:
+    # Check if user exists
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Verify password
+    if not pwd_context.verify(request.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    # Generate access token
+    access_token = create_access_token(
+        data={"sub": str(user.id)}, 
+        expires_delta=timedelta(minutes=30)
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
