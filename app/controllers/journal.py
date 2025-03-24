@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models.model import Journal, User
-from views.journal_schema import JournalCreate, JournalResponse
+from views.journal_schema import JournalCreate, JournalResponse, JournalListResponse
 from typing import List
 from utils.auth import get_current_user  # Import authentication
+from uuid import UUID  # Import UUID
+
 
 router = APIRouter(prefix="/api/journals", tags=["Journals"])
 
@@ -20,16 +22,23 @@ def create_journal(
     db.refresh(new_journal)
     return new_journal
 
-@router.get("/", response_model=List[JournalResponse])
+@router.get("/", response_model=JournalListResponse)  # ✅ Use the new response model
 def get_journals(
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)  # 🔒 Protected
+    current_user: User = Depends(get_current_user)
 ):
-    return db.query(Journal).filter(Journal.user_id == current_user.id).all()
+    journals = db.query(Journal).filter(Journal.user_id == current_user.id).all()
+    
+    return {
+        "status": "success",
+        "message": "Journals retrieved successfully",
+        "data": [JournalResponse.model_validate(j) for j in journals],  # ✅ Convert to Pydantic model
+        "total": len(journals)
+    }
 
 @router.get("/{journal_id}", response_model=JournalResponse)
 def get_journal(
-    journal_id: int, 
+    journal_id: UUID, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):
@@ -40,7 +49,7 @@ def get_journal(
 
 @router.put("/{journal_id}", response_model=JournalResponse)
 def update_journal(
-    journal_id: int, 
+    journal_id: UUID, 
     journal_data: JournalCreate, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
@@ -58,7 +67,7 @@ def update_journal(
 
 @router.delete("/{journal_id}")
 def delete_journal(
-    journal_id: int, 
+    journal_id: UUID, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):

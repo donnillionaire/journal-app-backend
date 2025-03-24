@@ -60,14 +60,3 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     return login_user(request, db)
 
-# @router.post("/login", response_model=Token)
-# def login(request: LoginRequest, db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.email == request.email).first()
-#     if not user or not pwd_context.verify(request.password, user.password):
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-#     access_token = create_access_token(
-#         data={"sub": user.id}, 
-#         expires_delta=timedelta(minutes=30)  # Token expires in 30 minutes
-#     )
-#     return {"access_token": access_token, "token_type": "bearer"}
