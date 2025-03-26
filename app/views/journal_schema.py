@@ -7,6 +7,7 @@ from models.model import Journal
 class JournalCreate(BaseModel):
     title: str
     content: str
+    date_of_entry: datetime  # ✅ Now Pydantic will parse it automatically
     journal_category: str
 
 class JournalResponse(JournalCreate):

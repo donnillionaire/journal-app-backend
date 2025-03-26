@@ -24,7 +24,7 @@ def create_journal(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):
-    new_journal = Journal(**journal.dict(), user_id=current_user.id)
+    new_journal = Journal(**journal.model_dump(), user_id=current_user.id)
     db.add(new_journal)
     db.commit()
     db.refresh(new_journal)
