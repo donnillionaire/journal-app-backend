@@ -9,6 +9,8 @@ from uuid import UUID  # Import UUID
 from datetime import datetime
 from sqlalchemy.types import Date  # ✅ Import Date type
 from sqlalchemy.sql.expression import cast
+from sqlalchemy import desc  # Import `desc` for descending order
+
 
 
 
@@ -87,6 +89,7 @@ def get_journal_by_date(
         db.query(Journal)
         .filter(Journal.user_id == current_user.id)
         .filter(cast(Journal.created_at, Date) == target_date)  # ✅ Explicitly cast `created_at` to Date
+        .order_by(desc(Journal.created_at))  # Sort by `created_at` in descending order (latest first)
         .all()  # Retrieve all matching entries
     )
 
