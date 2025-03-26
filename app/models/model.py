@@ -15,12 +15,12 @@ import uuid
 Base = declarative_base()
 
 # Many-to-Many Association Table
-journal_tags = Table(
-    "journal_tags",
-    Base.metadata,
-    Column("journal_id", UUID(as_uuid=True), ForeignKey("journals.id"), primary_key=True),
-    Column("tag_id", UUID(as_uuid=True), ForeignKey("tags.id"), primary_key=True),
-)
+# journal_tags = Table(
+#     "journal_tags",
+#     Base.metadata,
+#     Column("journal_id", UUID(as_uuid=True), ForeignKey("journals.id"), primary_key=True),
+#     Column("tag_id", UUID(as_uuid=True), ForeignKey("tags.id"), primary_key=True),
+# )
 
 
 
@@ -31,6 +31,7 @@ class Journal(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
+    journal_category = Column(String, nullable=False)
     created_at = Column(DateTime, default=func.now())
 
     user = relationship("User", back_populates="journals")

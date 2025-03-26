@@ -7,6 +7,7 @@ from models.model import Journal
 class JournalCreate(BaseModel):
     title: str
     content: str
+    journal_category: str
 
 class JournalResponse(JournalCreate):
     id: UUID
