@@ -6,6 +6,12 @@ from views.journal_schema import JournalCreate, JournalResponse, JournalListResp
 from typing import List
 from utils.auth import get_current_user  # Import authentication
 from uuid import UUID  # Import UUID
+from datetime import datetime
+from sqlalchemy.types import Date  # ✅ Import Date type
+from sqlalchemy.sql.expression import cast
+
+
+
 
 
 router = APIRouter(prefix="/api/journals", tags=["Journals"])
@@ -60,6 +66,44 @@ def get_journal(
         "message": "Journal retrieved successfully",
         "data": JournalResponse.model_validate(journal),  # ✅ Convert ORM object to Pydantic model
     }
+    
+    
+    
+
+
+@router.get("/by-date/{date}", response_model=JournalListResponse)
+def get_journal_by_date(
+    date: str,  # Expecting YYYY-MM-DD format
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 🔒 Protected
+):
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    # Query all journal entries for the given date and user
+    journals = (
+        db.query(Journal)
+        .filter(Journal.user_id == current_user.id)
+        .filter(cast(Journal.created_at, Date) == target_date)  # ✅ Explicitly cast `created_at` to Date
+        .all()  # Retrieve all matching entries
+    )
+
+    if not journals:
+        raise HTTPException(status_code=404, detail="No journal entries found for the given date")
+
+    # Validate and convert each journal entry into the JournalResponse schema
+    journal_responses = [JournalResponse.model_validate(journal) for journal in journals]
+
+    # Return the response with the total count of entries
+    return JournalListResponse(
+        status="success",
+        message="Journal entries retrieved successfully",
+        data=journal_responses,
+        total=len(journal_responses)  # Total number of entries
+    )
+    
 
 
 
