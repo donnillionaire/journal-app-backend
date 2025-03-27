@@ -41,12 +41,12 @@ def create_journal(
 @router.get("/summaries", response_model=SummaryResponse)
 def get_summaries(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # Get the authenticated user
+    current_user: User = Depends(get_current_user)
 ):
     # Fetch all journal entries for the current user
     journals = (
         db.query(Journal)
-        .filter(Journal.user_id == current_user.id)  # Filter by user_id
+        .filter(Journal.user_id == current_user.id)
         .all()
     )
 
@@ -79,14 +79,23 @@ def get_summaries(
     daily_trend_list = [{"date": key, "count": value} for key, value in daily_trend.items()]
     daily_trend_list.sort(key=lambda x: x["date"])
 
+    # Compute word count trend
+    word_count_trend = {}
+    for journal in journals:
+        day_key = journal.date_of_entry.strftime("%Y-%m-%d")
+        if day_key not in word_count_trend:
+            word_count_trend[day_key] = 0
+        # Split content into words and count them
+        word_count_trend[day_key] += len(journal.content.split())
+    word_count_trend_list = [{"date": key, "word_count": value} for key, value in word_count_trend.items()]
+    word_count_trend_list.sort(key=lambda x: x["date"])
+
     return SummaryResponse(
         category_distribution=category_distribution,
         monthly_counts=monthly_counts_list,
-        daily_trend=daily_trend_list
+        daily_trend=daily_trend_list,
+        word_count_trend=word_count_trend_list  # Include word count trend
     )
-    
-
-
 
 @router.get("/", response_model=JournalListResponse)  # ✅ Use the new response model
 def get_journals(

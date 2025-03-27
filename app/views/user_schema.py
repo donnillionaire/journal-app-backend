@@ -35,3 +35,4 @@ class SummaryResponse(BaseModel):
     category_distribution: dict
     monthly_counts: List[dict]
     daily_trend: List[dict]
+    word_count_trend: List[dict]  # Add word count trend
