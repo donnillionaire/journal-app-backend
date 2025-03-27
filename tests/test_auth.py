@@ -9,6 +9,23 @@ from app.views.auth import RegisterRequest, LoginRequest
 import uuid
 from app.database import get_db
 
+import pytest
+from fastapi import FastAPI, status
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
+from sqlalchemy.orm import Session
+from datetime import timedelta
+from uuid import uuid4
+
+# Import your router and dependencies
+from app.routes.auth import router
+from app.models.model import User
+from app.views.auth import LoginRequest, RegisterRequest
+from app.views.user_schema import UserResponse, UserAPIResponse
+from utils.auth import get_current_user
+from database import get_db
+
+
 
 client = TestClient(app)
 
@@ -80,21 +97,8 @@ def test_get_profile_invalid_token():
 
 
 
-import pytest
-from fastapi import FastAPI, status
-from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
-from sqlalchemy.orm import Session
-from datetime import timedelta
-from uuid import uuid4
 
-# Import your router and dependencies
-from app.routes.auth import router
-from app.models.model import User
-from app.views.auth import LoginRequest, RegisterRequest
-from app.views.user_schema import UserResponse, UserAPIResponse
-from utils.auth import get_current_user
-from database import get_db
+
 
 # Create test app
 app = FastAPI()

@@ -39,29 +39,6 @@ def authenticate_user(email: str, password: str) -> str | None:
 
 
 
-# def register_user(request, db: Session):
-#     # 🔹 Use `query()` instead of `select()`
-#     existing_user = db.query(User).filter(User.email == request.email).first()
-
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="User already exists")
-
-#     # Hash the password
-#     hashed_password = pwd_context.hash(request.password)
-
-#     # Create a new user
-#     new_user = User(email=request.email, first_name=request.first_name, last_name=request.last_name, password=hashed_password)
-
-#     # Add the new user to the session
-#     db.add(new_user)
-#     db.commit()  # Commit changes to the database
-#     db.refresh(new_user)  # Refresh to get the latest state
-
-#     return {"message": "User registered successfully"}
-
-
-
-
 def register_user(request: RegisterRequest, db: Session) -> Token:
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == request.email).first()
