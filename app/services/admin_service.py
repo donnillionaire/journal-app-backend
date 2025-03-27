@@ -12,7 +12,7 @@ from sqlalchemy.future import select
 from app.models.model import User, UserRole
 from passlib.context import CryptContext
 from app.utils.auth import create_access_token
-from app.views.auth import Token, LoginRequest
+from app.views.auth import Token, LoginRequest, LoginResponse
 
 
 SECRET_KEY = "your-secret-key"
@@ -91,6 +91,13 @@ def login_admin(request: LoginRequest, db: Session) -> Token:
         role=user.role.value,       # Role is passed as a separate argument
         expires_delta=timedelta(minutes=30)
     )
+    
+    
+    data=LoginResponse(
+            token=access_token,
+            role=user.role.value
+          
+        )
 
-    return Token(access_token=access_token, token_type="bearer")
+    return data
 
