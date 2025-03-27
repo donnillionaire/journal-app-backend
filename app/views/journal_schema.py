@@ -33,3 +33,4 @@ class JournalAPIResponse(BaseModel):
     status: str
     message: str
     data: JournalResponse  # List of journals
+    

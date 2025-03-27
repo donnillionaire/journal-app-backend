@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.model import Journal, User
 from views.journal_schema import JournalCreate, JournalResponse, JournalListResponse,JournalAPIResponse
+from views.user_schema import SummaryResponse
 from typing import List
 from utils.auth import get_current_user  # Import authentication
 from uuid import UUID  # Import UUID
@@ -36,6 +37,54 @@ def create_journal(
         "data": JournalResponse.model_validate(new_journal),  # ✅ Convert ORM object to Pydantic model
     }
 
+
+@router.get("/summaries", response_model=SummaryResponse)
+def get_summaries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # Get the authenticated user
+):
+    # Fetch all journal entries for the current user
+    journals = (
+        db.query(Journal)
+        .filter(Journal.user_id == current_user.id)  # Filter by user_id
+        .all()
+    )
+
+    # Compute category distribution
+    category_distribution = {}
+    valid_categories = ["Personal", "Work", "Travel", "Health", "Social"]
+    for cat in valid_categories:
+        category_distribution[cat] = 0
+    for journal in journals:
+        category = journal.journal_category or "Uncategorized"
+        if category in category_distribution:
+            category_distribution[category] += 1
+
+    # Compute monthly counts
+    monthly_counts = {}
+    for journal in journals:
+        month_key = journal.date_of_entry.strftime("%B %Y")
+        if month_key not in monthly_counts:
+            monthly_counts[month_key] = 0
+        monthly_counts[month_key] += 1
+    monthly_counts_list = [{"month": key, "count": value} for key, value in monthly_counts.items()]
+
+    # Compute daily trend
+    daily_trend = {}
+    for journal in journals:
+        day_key = journal.date_of_entry.strftime("%Y-%m-%d")
+        if day_key not in daily_trend:
+            daily_trend[day_key] = 0
+        daily_trend[day_key] += 1
+    daily_trend_list = [{"date": key, "count": value} for key, value in daily_trend.items()]
+    daily_trend_list.sort(key=lambda x: x["date"])
+
+    return SummaryResponse(
+        category_distribution=category_distribution,
+        monthly_counts=monthly_counts_list,
+        daily_trend=daily_trend_list
+    )
+    
 
 
 
@@ -143,7 +192,6 @@ def get_journals_by_year(
     
 
 
-
 @router.put("/{journal_id}", response_model=JournalResponse)
 def update_journal(
     journal_id: UUID, 
@@ -175,3 +223,41 @@ def delete_journal(
     db.delete(journal)
     db.commit()
     return {"message": "Journal deleted successfully"}
+
+
+
+
+
+@router.get("/by-category/{category}", response_model=JournalListResponse)
+def get_journal_by_category(
+    category: str,  # Expecting a valid category name (e.g., "Personal", "Work")
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 🔒 Ensure the user is authenticated
+):
+    # Validate the category (optional: you can define a list of valid categories)
+    valid_categories = ["Personal", "Work", "Travel", "Health", "Social"]
+    if category not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"Invalid category. Choose from {', '.join(valid_categories)}.")
+
+    # Query all journal entries for the given category and user
+    journals = (
+        db.query(Journal)
+        .filter(Journal.user_id == current_user.id)
+        .filter(Journal.journal_category == category)  # Filter by category
+        .order_by(Journal.date_of_entry.desc())  # Sort by `date_of_entry` in descending order (latest first)
+        .all()
+    )
+
+    # Return an empty list instead of 404 if no entries exist
+    journal_responses = [JournalResponse.model_validate(journal) for journal in journals]
+
+    return JournalListResponse(
+        status="success",
+        message="Journal entries retrieved successfully" if journals else "No journal entries found",
+        data=journal_responses,
+        total=len(journal_responses)
+    )
+    
+    
+    
+

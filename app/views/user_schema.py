@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID  # Import UUID
+from typing import List
+
 
 class UserCreate(BaseModel):
     username: str
@@ -28,3 +30,8 @@ class UserAPIResponse(BaseModel):
     data: UserResponse  # List of journals
     
     
+    
+class SummaryResponse(BaseModel):
+    category_distribution: dict
+    monthly_counts: List[dict]
+    daily_trend: List[dict]
