@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.model import User
@@ -7,8 +7,8 @@ from passlib.context import CryptContext
 from app.utils.auth import create_access_token
 from datetime import timedelta
 from app.views.auth import RegisterRequest
-from app.views.user_schema import UserResponse, UserAPIResponse
-from app.services.admin_service import login_admin, register_admin
+from app.views.user_schema import UserResponse, UserAPIResponse, UserListResponse
+from app.services.admin_service import login_admin, register_admin, get_all_users_service
 from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/auth/admin", tags=["Admin"])
@@ -42,4 +42,33 @@ async def get_profile(user: User = Depends(get_current_user)):
             email=user.email,
             role=user.role  # Include the role in the response
         )
+    )
+    
+    
+    
+@router.get("/all-users", response_model=UserListResponse)  # ✅ Use the new response model
+async def get_all_users(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Number of users per page"),
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db)
+):
+    
+    
+    print("current role", current_user.role.value)
+    # Ensure the user is an admin
+    if current_user.role.value != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this resource"
+        )
+
+    # Call the service layer to retrieve users
+    users_data = get_all_users_service(db, page, limit)
+
+    return UserListResponse(
+        status="success",
+        message="Users retrieved successfully",
+        data=users_data["data"],
+        metadata=users_data["metadata"]
     )

@@ -71,31 +71,6 @@ def register_user(request: RegisterRequest, db: Session) -> Token:
 
 
 
-
-
-
-
-
-# def login_user(request: LoginRequest, db: Session) -> Token:
-#     # Check if user exists
-#     user = db.query(User).filter(User.email == request.email).first()
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-#     # Verify password
-#     if not pwd_context.verify(request.password, user.password):
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-#     # Generate access token
-#     access_token = create_access_token(
-#         data={"sub": str(user.id)}, 
-#         expires_delta=timedelta(minutes=30),
-#         role=user.role.value
-#     )
-
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
 def login_user(request: LoginRequest, db: Session) -> Token:
     # Check if user exists
     user = db.query(User.id, User.password, User.role).filter(User.email == request.email).first()

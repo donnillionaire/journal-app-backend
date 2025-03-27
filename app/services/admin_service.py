@@ -7,12 +7,17 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from app.views.auth import RegisterRequest
 
+from app.views.user_schema import UserResponse
+
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.model import User, UserRole
 from passlib.context import CryptContext
 from app.utils.auth import create_access_token
 from app.views.auth import Token, LoginRequest, LoginResponse
+from typing import Dict, List
+
 
 
 SECRET_KEY = "your-secret-key"
@@ -101,3 +106,33 @@ def login_admin(request: LoginRequest, db: Session) -> Token:
 
     return data
 
+
+def get_all_users_service(db: Session, page: int, limit: int) -> Dict:
+    # Calculate pagination indices
+    offset = (page - 1) * limit
+
+    # Query the database for users
+    users_query = db.query(User).offset(offset).limit(limit)
+    total_users = db.query(User).count()  # Total number of users for pagination metadata
+    users = users_query.all()
+
+    # Format the response data
+    user_list = [
+        UserResponse(
+            id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            role=user.role
+        )
+        for user in users
+    ]
+
+    return {
+        "data": user_list,
+        "metadata": {
+            "page": page,
+            "limit": limit,
+            "total_users": total_users
+        }
+    }

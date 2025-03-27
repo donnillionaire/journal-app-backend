@@ -36,3 +36,27 @@ class SummaryResponse(BaseModel):
     daily_trend: List[dict]
     word_count_trend: List[dict]
     entry_length_averages: Dict[str, float]  # Add entry length averages
+
+
+
+from pydantic import BaseModel
+from typing import List, Optional
+from uuid import UUID
+
+class UserResponse(BaseModel):
+    id:UUID
+    first_name: str
+    last_name: str
+    email: str
+    role: str
+
+class Metadata(BaseModel):
+    page: int
+    limit: int
+    total_users: int
+
+class UserListResponse(BaseModel):
+    status: str
+    message: str
+    data: List[UserResponse]
+    metadata: Metadata
