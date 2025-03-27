@@ -2,10 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models.model import Journal, User
-from views.journal_schema import JournalCreate, JournalResponse, JournalListResponse,JournalAPIResponse
+from views.journal_schema import JournalCreate, JournalResponse, JournalListResponse,JournalAPIResponse, JournalUpdate
 from views.user_schema import SummaryResponse
 from typing import List
 from utils.auth import get_current_user  # Import authentication
+from utils.journal import tokenize_and_clean 
+from collections import Counter
+
+
 from uuid import UUID  # Import UUID
 from datetime import datetime
 from sqlalchemy.types import Date  # ✅ Import Date type
@@ -19,6 +23,37 @@ from sqlalchemy.sql import func
 
 
 router = APIRouter(prefix="/api/journals", tags=["Journals"])
+
+
+
+@router.get("/word-frequency", response_model=dict)
+def get_word_frequency(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    journals = (
+        db.query(Journal)
+        .filter(Journal.user_id == current_user.id)
+        .all()
+    )
+
+    all_content = " ".join(journal.content for journal in journals if journal.content)
+
+    if not all_content.strip():
+        return {"word_frequency": []}
+
+    words = tokenize_and_clean(all_content)
+    word_counts = Counter(words)
+
+    # Exclude common stop words
+    stop_words = {"the", "and", "is", "in", "to", "of", "a", "for", "on", "with"}
+    filtered_word_counts = {word: count for word, count in word_counts.items() if word not in stop_words}
+
+    # Get the top 50 most common words
+    top_words = sorted(filtered_word_counts.items(), key=lambda x: x[1], reverse=True)[:50]
+
+    word_frequency = [{"text": word, "value": count} for word, count in top_words]
+    return {"word_frequency": word_frequency}
 
 @router.post("/", response_model=JournalAPIResponse)
 def create_journal(
@@ -36,6 +71,8 @@ def create_journal(
         "message": "Journal created successfully",
         "data": JournalResponse.model_validate(new_journal),  # ✅ Convert ORM object to Pydantic model
     }
+
+
 
 
 @router.get("/summaries", response_model=SummaryResponse)
@@ -85,16 +122,32 @@ def get_summaries(
         day_key = journal.date_of_entry.strftime("%Y-%m-%d")
         if day_key not in word_count_trend:
             word_count_trend[day_key] = 0
-        # Split content into words and count them
         word_count_trend[day_key] += len(journal.content.split())
     word_count_trend_list = [{"date": key, "word_count": value} for key, value in word_count_trend.items()]
     word_count_trend_list.sort(key=lambda x: x["date"])
+
+    # Compute entry length averages by category
+    entry_length_totals = {}
+    entry_length_counts = {}
+    for journal in journals:
+        category = journal.journal_category or "Uncategorized"
+        if category not in entry_length_totals:
+            entry_length_totals[category] = 0
+            entry_length_counts[category] = 0
+        entry_length_totals[category] += len(journal.content.split())
+        entry_length_counts[category] += 1
+
+    entry_length_averages = {
+        category: entry_length_totals[category] / entry_length_counts[category]
+        for category in entry_length_totals
+    }
 
     return SummaryResponse(
         category_distribution=category_distribution,
         monthly_counts=monthly_counts_list,
         daily_trend=daily_trend_list,
-        word_count_trend=word_count_trend_list  # Include word count trend
+        word_count_trend=word_count_trend_list,
+        entry_length_averages=entry_length_averages  # Include entry length averages
     )
 
 @router.get("/", response_model=JournalListResponse)  # ✅ Use the new response model
@@ -204,7 +257,7 @@ def get_journals_by_year(
 @router.put("/{journal_id}", response_model=JournalResponse)
 def update_journal(
     journal_id: UUID, 
-    journal_data: JournalCreate, 
+    journal_data: JournalUpdate, 
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):

@@ -9,6 +9,15 @@ class JournalCreate(BaseModel):
     content: str
     date_of_entry: datetime  # ✅ Now Pydantic will parse it automatically
     journal_category: str
+    
+    
+    
+class JournalUpdate(BaseModel):
+    title: str
+    content: str
+    # date_of_entry: datetime  # ✅ Now Pydantic will parse it automatically
+    journal_category: str
+
 
 class JournalResponse(JournalCreate):
     id: UUID

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID  # Import UUID
-from typing import List
+from typing import List, Dict
 
 
 class UserCreate(BaseModel):
@@ -35,4 +35,5 @@ class SummaryResponse(BaseModel):
     category_distribution: dict
     monthly_counts: List[dict]
     daily_trend: List[dict]
-    word_count_trend: List[dict]  # Add word count trend
+    word_count_trend: List[dict]
+    entry_length_averages: Dict[str, float]  # Add entry length averages
