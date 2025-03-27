@@ -7,12 +7,13 @@
 
 
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Table, func
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Enum, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, declarative_base
 import uuid
 from sqlalchemy.orm import validates
 from datetime import datetime
+import enum
 
 
 
@@ -44,7 +45,12 @@ class Journal(Base):
         if date > datetime.now():
             raise ValueError("date_of_entry cannot be in the future.")
         return date
-    
+
+
+# Define role types
+class UserRole(str, enum.Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"   
     
 class User(Base):
     __tablename__ = "users"
@@ -55,6 +61,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     created_at = Column(DateTime, default=func.now())
+    role = Column(Enum(UserRole, name="userrole"), nullable=False, default=UserRole.USER)
 
     journals = relationship("Journal", back_populates="user", cascade="all, delete-orphan")
 

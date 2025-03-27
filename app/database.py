@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.model import Base
+from app.models.model import Base
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Odhiambo10@127.0.0.1:5432/journal"
 

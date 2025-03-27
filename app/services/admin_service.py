@@ -9,7 +9,7 @@ from app.views.auth import RegisterRequest
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.models.model import User
+from app.models.model import User, UserRole
 from passlib.context import CryptContext
 from app.utils.auth import create_access_token
 from app.views.auth import Token, LoginRequest
@@ -39,35 +39,30 @@ def authenticate_user(email: str, password: str) -> str | None:
 
 
 
-def register_user(request: RegisterRequest, db: Session) -> Token:
+def register_admin(request: RegisterRequest, db: Session) -> dict:
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == request.email).first()
+    print("existing user", existing_user)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
     # Hash the password
     hashed_password = pwd_context.hash(request.password)
 
-    # Create a new user
-    new_user = User(
+    # Create a new admin user
+    new_admin = User(
         first_name=request.first_name,
         last_name=request.last_name,
         email=request.email,
-        password=hashed_password
+        password=hashed_password,
+        role=UserRole.ADMIN  # Set role explicitly
     )
-    db.add(new_user)
+
+    db.add(new_admin)
     db.commit()
-    db.refresh(new_user)
+    db.refresh(new_admin)
 
-    # Generate access token
-    access_token = create_access_token(
-        data={"sub": str(new_user.id)},
-        expires_delta=timedelta(minutes=30)
-    )
-
-    # return {"access_token": access_token, "token_type": "bearer"}
-
-    return {"message": "User registered successfully"}
+    return {"message": "Admin registered successfully"}
 
 
 
@@ -76,27 +71,7 @@ def register_user(request: RegisterRequest, db: Session) -> Token:
 
 
 
-# def login_user(request: LoginRequest, db: Session) -> Token:
-#     # Check if user exists
-#     user = db.query(User).filter(User.email == request.email).first()
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-#     # Verify password
-#     if not pwd_context.verify(request.password, user.password):
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-
-#     # Generate access token
-#     access_token = create_access_token(
-#         data={"sub": str(user.id)}, 
-#         expires_delta=timedelta(minutes=30),
-#         role=user.role.value
-#     )
-
-#     return {"access_token": access_token, "token_type": "bearer"}
-
-
-def login_user(request: LoginRequest, db: Session) -> Token:
+def login_admin(request: LoginRequest, db: Session) -> Token:
     # Check if user exists
     user = db.query(User.id, User.password, User.role).filter(User.email == request.email).first()
     if not user:
@@ -106,6 +81,10 @@ def login_user(request: LoginRequest, db: Session) -> Token:
     if not pwd_context.verify(request.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
+    # Validate role
+    if user.role.value != UserRole.ADMIN.value:  # Use constants for roles
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
     # Generate access token
     access_token = create_access_token(
         data={"sub": str(user.id)},  # User ID is included in the token payload
@@ -114,3 +93,4 @@ def login_user(request: LoginRequest, db: Session) -> Token:
     )
 
     return Token(access_token=access_token, token_type="bearer")
+

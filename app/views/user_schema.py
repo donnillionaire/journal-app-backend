@@ -10,13 +10,12 @@ class UserCreate(BaseModel):
 
 
 
-
-
 class UserResponse(BaseModel):
     id: UUID
     first_name: str
     last_name: str
     email: EmailStr
+    role : str
 
     class Config:
         orm_mode = True

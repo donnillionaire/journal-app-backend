@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from database import get_db
-from models.model import Journal, User
-from views.journal_schema import JournalCreate, JournalResponse, JournalListResponse,JournalAPIResponse, JournalUpdate
-from views.user_schema import SummaryResponse
+from app.database import get_db
+from app.models.model import Journal, User
+from app.views.journal_schema import JournalCreate, JournalResponse, JournalListResponse,JournalAPIResponse, JournalUpdate
+from app.views.user_schema import SummaryResponse
 from typing import List
-from utils.auth import get_current_user  # Import authentication
-from utils.journal import tokenize_and_clean 
+from app.utils.auth import get_current_user  # Import authentication
+from app.utils.journal import tokenize_and_clean 
 from collections import Counter
 
 

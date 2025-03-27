@@ -2,8 +2,8 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from database import get_db
-from models.model import User
+from app.database import get_db
+from app.models.model import User
 import os
 from datetime import datetime, timedelta
 
@@ -18,13 +18,17 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 # Use HTTPBearer instead of OAuth2PasswordBearer
 security_scheme = HTTPBearer()
 
-def create_access_token(data: dict, expires_delta: timedelta):
+def create_access_token(data: dict, role: str, expires_delta: timedelta):
     """
-    Create a JWT access token.
+    Create a JWT access token with user role included.
     """
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+    to_encode.update({
+        "exp": expire,
+        "iat": datetime.utcnow(),
+        "role": role  # Include the role in the token
+    })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(
