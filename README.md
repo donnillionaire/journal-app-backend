@@ -45,21 +45,15 @@ Install the required Python packages using:
 pip install -r requirements.txt
 ```
 
-## Step 5: Run Database Migrations (If Applicable)
-If the project uses database migrations (e.g., Alembic), apply them using:
 
-```sh
-alembic upgrade head
-```
-
-## Step 6: Launch the FastAPI Server
+## Step 5: Launch the FastAPI Server
 Start the FastAPI application using Uvicorn:
 
 ```sh
 uvicorn app.main:app --reload
 ```
 
-## Step 7: Access the API
+## Step 6: Access the API
 Once the server is running, you can access the API documentation at:
 - **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
@@ -67,8 +61,7 @@ Once the server is running, you can access the API documentation at:
 - If you encounter issues, ensure all dependencies are installed correctly.
 - Check if the required environment variables are set.
 - Verify that the database is running if the app relies on one.
-- Use `uvicorn app.main:app` to see detailed logs.
-
+- Get in contact with the me any time
 ## Conclusion
 Following these steps will successfully launch the FastAPI backend. Ensure you have the correct configurations set up for smooth operation.
 
