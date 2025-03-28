@@ -48,6 +48,7 @@ def register_user(request: RegisterRequest, db: Session) -> Token:
     # Hash the password
     hashed_password = pwd_context.hash(request.password)
 
+
     # Create a new user
     new_user = User(
         first_name=request.first_name,
@@ -59,11 +60,6 @@ def register_user(request: RegisterRequest, db: Session) -> Token:
     db.commit()
     db.refresh(new_user)
 
-    # Generate access token
-    access_token = create_access_token(
-        data={"sub": str(new_user.id)},
-        expires_delta=timedelta(minutes=30)
-    )
 
     # return {"access_token": access_token, "token_type": "bearer"}
 

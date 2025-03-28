@@ -17,7 +17,7 @@ from sqlalchemy.sql.expression import cast
 from sqlalchemy import desc  # Import `desc` for descending order
 from sqlalchemy.sql import func
 
-
+from app.utils.sentiment import get_sentiment
 
 
 
@@ -61,17 +61,25 @@ def create_journal(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):
-    new_journal = Journal(**journal.model_dump(), user_id=current_user.id)
+    # Analyze sentiment using AWS Comprehend
+    sentiment = get_sentiment(journal.content)
+
+    # Create new journal entry with sentiment
+    new_journal = Journal(
+        **journal.model_dump(),
+        user_id=current_user.id,
+        sentiment=sentiment  # Add sentiment analysis result
+    )
+
     db.add(new_journal)
     db.commit()
     db.refresh(new_journal)
-    # return new_journal
+
     return {
         "status": "success",
         "message": "Journal created successfully",
         "data": JournalResponse.model_validate(new_journal),  # ✅ Convert ORM object to Pydantic model
     }
-
 
 
 
@@ -262,14 +270,21 @@ def update_journal(
     current_user: User = Depends(get_current_user)  # 🔒 Protected
 ):
     journal = db.query(Journal).filter(Journal.id == journal_id, Journal.user_id == current_user.id).first()
+    
     if not journal:
         raise HTTPException(status_code=404, detail="Journal not found")
 
-    for key, value in journal_data.dict().items():
+    # Update only the fields that have changed
+    for key, value in journal_data.dict(exclude_unset=True).items():
         setattr(journal, key, value)
-    
+
+    # Recalculate sentiment if the content has changed
+    if journal_data.content:
+        journal.sentiment = get_sentiment(journal_data.content)
+
     db.commit()
     db.refresh(journal)
+    
     return journal
 
 @router.delete("/{journal_id}")

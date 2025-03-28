@@ -3,6 +3,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import List
 from app.models.model import Journal
+from typing import Optional
 
 class JournalCreate(BaseModel):
     title: str
@@ -15,7 +16,7 @@ class JournalCreate(BaseModel):
 class JournalUpdate(BaseModel):
     title: str
     content: str
-    # date_of_entry: datetime  # ✅ Now Pydantic will parse it automatically
+    # sentiment: str
     journal_category: str
 
 
@@ -23,6 +24,7 @@ class JournalResponse(JournalCreate):
     id: UUID
     user_id: UUID
     created_at: datetime
+    sentiment: Optional[str] = None  # ✅ Sentiment is included but NOT required
 
     class Config:
         orm_mode = True

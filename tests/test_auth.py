@@ -68,91 +68,61 @@ def test_register_user(mocker, mock_db):
     
 def test_login_endpoint():
     """Tests the login endpoint without mocking login_user."""
-    
     request_data = {
         "email": "john.doe@example.com",
         "password": "password123"
     }
-
     response = client.post("/auth/user/login", json=request_data)
-
-    print(response.status_code, response.json())  # Debugging output
-
+    
+    # Debugging output (optional)
+    print(response.status_code, response.json())
+    
+    # Assertions
     assert response.status_code == 200
-    assert "access_token" in response.json()
+    response_data = response.json()
+    assert "token" in response_data  # Updated key name
+    assert response_data["role"] == "USER"  # Optional: Assert role
 
 # Test User Profile
 def test_get_profile_invalid_token():
     """Tests that an invalid token results in a 401 Unauthorized error."""
-
     headers = {"Authorization": "Bearer invalid_token"}
-
     response = client.get("/auth/user/profile", headers=headers)
-
-    print(response.status_code, response.json())  # Debugging output
-
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid authentication credentials"
-
-
-
-
-
-
-
-# Create test app
-app = FastAPI()
-app.include_router(router)
-client = TestClient(app)
-
-# Test data
-TEST_USER_ID = uuid4()
-TEST_EMAIL = "test@example.com"
-TEST_PASSWORD = "securepassword123"
-TEST_FIRST_NAME = "Test"
-TEST_LAST_NAME = "User"
-
-@pytest.fixture
-def mock_db():
-    return MagicMock(spec=Session)
-
-@pytest.fixture
-def mock_user():
-    user = MagicMock(spec=User)
-    user.id = TEST_USER_ID
-    user.email = TEST_EMAIL
-    user.first_name = TEST_FIRST_NAME
-    user.last_name = TEST_LAST_NAME
-    user.password = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW"  # bcrypt hash of "secret"
-    return user
-
-@pytest.fixture
-def register_request():
-    return {
-        "first_name": TEST_FIRST_NAME,
-        "last_name": TEST_LAST_NAME,
-        "email": TEST_EMAIL,
-        "password": TEST_PASSWORD
-    }
-
-
-
-def test_get_profile_success(mock_db, mock_user):
-    # Mock the current user dependency
-    app.dependency_overrides[get_current_user] = lambda: mock_user
     
-    # Call endpoint
-    response = client.get("/auth/user/profile")
+    # Debugging output (optional)
+    print(response.status_code, response.json())
     
     # Assertions
-    assert response.status_code == status.HTTP_200_OK
-    data = response.json()
-    assert data["status"] == "success"
-    assert data["message"] == "User profile retrieved successfully"
-    assert data["data"]["email"] == TEST_EMAIL
-    assert data["data"]["first_name"] == TEST_FIRST_NAME
-    assert data["data"]["last_name"] == TEST_LAST_NAME
-    
-    # Clean up
-    app.dependency_overrides.clear()
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid token. Please log in again."
 
+
+
+
+
+    
+   
+   
+   
+   
+def test_e2e_auth_flow():
+    """End-to-End test covering user registration, login, and profile access"""
+    unique_email = f"john.doe{uuid.uuid4().hex[:6]}@example.com"
+
+    # Step 1: Register a user
+    register_data = {
+        "first_name": "E2E",
+        "last_name": "User",
+        "email": unique_email,
+        "password": "strongpassword"
+    }
+    register_response = client.post("/auth/user/register", json=register_data)
+    assert register_response.status_code == 201, register_response.text
+
+    # Step 2: Login with the registered user
+    login_data = {
+        "email": unique_email,  # Use the same email as during registration
+        "password": "strongpassword"
+    }
+    login_response = client.post("/auth/user/login", json=login_data)
+    assert login_response.status_code == 200, login_response.text

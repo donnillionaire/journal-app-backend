@@ -37,6 +37,7 @@ class Journal(Base):
     content = Column(Text, nullable=False)
     journal_category = Column(String, nullable=False)
     date_of_entry = Column(DateTime, default=func.now())
+    sentiment = Column(String, index=True)
     created_at = Column(DateTime, default=func.now())
     user = relationship("User", back_populates="journals")
 
@@ -62,7 +63,6 @@ class User(Base):
     password = Column(String)
     created_at = Column(DateTime, default=func.now())
     role = Column(Enum(UserRole, name="userrole"), nullable=False, default=UserRole.USER)
-
     journals = relationship("Journal", back_populates="user", cascade="all, delete-orphan")
 
 
