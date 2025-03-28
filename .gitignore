@@ -36,8 +36,8 @@ build/
 *.manifest
 *.spec
 
-# Migrations (if using Alembic)
-migrations/
+# # Migrations (if using Alembic)
+# migrations/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
