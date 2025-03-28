@@ -17,10 +17,15 @@ from passlib.context import CryptContext
 from app.utils.auth import create_access_token
 from app.views.auth import Token, LoginRequest, LoginResponse
 from typing import Dict, List
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 
 
-SECRET_KEY = "your-secret-key"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

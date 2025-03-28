@@ -15,7 +15,15 @@ from app.utils.auth import create_access_token
 from app.views.auth import Token, LoginRequest, LoginResponse
 
 
-SECRET_KEY = "your-secret-key"
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+
+
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

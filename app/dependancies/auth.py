@@ -15,7 +15,7 @@ load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/user/login")
 
 # SECRET_KEY = "your-secret-key"
-SECRET_KEY = os.getenv("JWT_SECRET", "your_secret_key")  # Use an environment variable for security
+SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")  # Use an environment variable for security
 ALGORITHM = "HS256"
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
